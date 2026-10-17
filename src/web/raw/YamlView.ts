@@ -31,6 +31,10 @@ export class YamlView {
 		})
 	}
 
+	destroy(): void {
+		this.#view.destroy()
+	}
+
 	get text(): string {
 		return this.#view.state.doc.toString()
 	}

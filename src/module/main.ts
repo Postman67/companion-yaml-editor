@@ -28,7 +28,7 @@ class YamlEditorInstance extends InstanceBase<ModuleConfig> {
 			{
 				id: 'info',
 				type: 'static-text',
-				label: 'YAML editor',
+				label: 'Button editor',
 				value: `Open the editor at <a href="/instance/${this.label}/" target="_blank">/instance/${this.label}/</a>`,
 				width: 12,
 			},

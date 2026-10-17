@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { parse } from 'yaml'
-import { controlToYaml } from '../src/web/ControlYaml.js'
+import { controlToYaml } from '../src/web/raw/ControlYaml.js'
 
 const sampleControl = {
 	type: 'button-layered',

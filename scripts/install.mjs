@@ -12,12 +12,12 @@ import { parseArgs } from 'node:util'
 import { createTRPCUntypedClient, createWSClient, wsLink } from '@trpc/client'
 
 const root = path.resolve(import.meta.dirname, '..')
-const SUPPORTED_COMPANION = /^5\.0\./
+const SUPPORTED_COMPANION = /^5\.1\./
 
 const { values: args } = parseArgs({
 	options: {
 		url: { type: 'string' },
-		label: { type: 'string', default: 'yaml_editor' },
+		label: { type: 'string', default: 'button_editor' },
 	},
 })
 
@@ -38,7 +38,7 @@ try {
 	const appInfo = await client.query('appInfo.version', undefined)
 	console.log(`  Companion ${appInfo.appVersion} (${appInfo.appBuild})`)
 	if (!SUPPORTED_COMPANION.test(appInfo.appVersion)) {
-		console.warn(`  Warning: this editor targets Companion 5.0.x; its internal api may differ in this version`)
+		console.warn(`  Warning: this editor targets Companion 5.1.x; its internal api may differ in this version`)
 	}
 	if (!appInfo.customModuleImportAllowed) {
 		throw new Error('Companion refuses module imports from this machine. Run this script on the Companion machine.')

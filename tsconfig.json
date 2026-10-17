@@ -10,7 +10,8 @@
 		"verbatimModuleSyntax": true,
 		"skipLibCheck": true,
 		"noEmit": true,
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"jsx": "react-jsx"
 	},
 	"include": ["src", "test", "scripts/*.d.ts"]
 }

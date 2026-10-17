@@ -3,7 +3,7 @@
 	"id": "companion-yaml-editor",
 	"name": "companion-yaml-editor",
 	"shortname": "yaml-editor",
-	"description": "A text (YAML) editor for Companion buttons, served at /instance/<label>/",
+	"description": "A compact outline editor for Companion buttons, served at /instance/<label>/",
 	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "https://github.com/Postman67/companion-yaml-editor",
@@ -17,6 +17,6 @@
 		"entrypoint": "../main.js"
 	},
 	"manufacturer": "Tools",
-	"products": ["Button YAML Editor"],
+	"products": ["Button Editor"],
 	"keywords": ["yaml", "editor", "buttons"]
 }

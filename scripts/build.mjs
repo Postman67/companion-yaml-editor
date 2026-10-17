@@ -18,12 +18,14 @@ const baseJson = JSON.parse(
 
 // 1. The web page
 const webBuild = await esbuild.build({
-	entryPoints: [path.join(root, 'src/web/main.ts')],
+	entryPoints: [path.join(root, 'src/web/main.tsx')],
 	bundle: true,
 	platform: 'browser',
 	format: 'esm',
 	target: 'es2022',
 	minify: true,
+	jsx: 'automatic',
+	define: { 'process.env.NODE_ENV': '"production"' },
 	write: false,
 	outfile: 'app.js',
 	logLevel: 'warning',

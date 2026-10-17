@@ -5,7 +5,7 @@ import {
 	getControlIdAt,
 	parseLocationHash,
 	type PagesState,
-} from '../src/web/PagesState.js'
+} from '../src/web/stores/PagesState.js'
 
 const initState = (): PagesState =>
 	applyPageChanges(null, {

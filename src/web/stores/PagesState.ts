@@ -1,4 +1,4 @@
-import type { ControlLocation, PageModel, PageModelChanges } from './CompanionApi.js'
+import type { ControlLocation, PageModel, PageModelChanges } from '../api/CompanionApi.js'
 
 export interface PagesState {
 	/** Page ids, in page-number order (page 1 first) */
