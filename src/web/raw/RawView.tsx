@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { ControlConfig } from '../api/CompanionApi.js'
 import { useStores } from '../stores/CompanionStores.js'
 import { useStore } from '../stores/Store.js'
+import { useIsDark } from '../Theme.js'
 import { controlToYaml } from './ControlYaml.js'
 import { YamlView } from './YamlView.js'
 
@@ -12,14 +13,21 @@ export function RawView({ config }: { config: ControlConfig }) {
 	const parentRef = useRef<HTMLDivElement>(null)
 	const viewRef = useRef<YamlView | null>(null)
 
+	const dark = useIsDark()
+
 	useEffect(() => {
 		if (!parentRef.current) return
-		viewRef.current = new YamlView(parentRef.current)
+		// The theme is applied by the effect below, which runs straight after this one
+		viewRef.current = new YamlView(parentRef.current, false)
 		return () => {
 			viewRef.current?.destroy()
 			viewRef.current = null
 		}
 	}, [])
+
+	useEffect(() => {
+		viewRef.current?.setDark(dark)
+	}, [dark])
 
 	useEffect(() => {
 		const labels = new Map([...connections.values()].map((c) => [c.id, c.label]))

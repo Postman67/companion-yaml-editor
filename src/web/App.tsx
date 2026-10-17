@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar.js'
 import { useControlConfig, useStores } from './stores/CompanionStores.js'
 import { formatLocationHash, getControlIdAt, getPage, parseLocationHash } from './stores/PagesState.js'
 import { useStore } from './stores/Store.js'
+import { setThemePreference, useThemePreference, type ThemePreference } from './Theme.js'
 
 const STATUS_TEXT = { connecting: 'Connecting…', open: 'Connected', closed: 'Disconnected' } as const
 
@@ -31,6 +32,7 @@ export function App() {
 					Page {location.pageNumber}
 					{pageName ? ` (${pageName})` : ''} · row {location.row} · column {location.column}
 				</span>
+				<ThemePicker />
 				<span className="status" data-state={connectionState}>
 					{STATUS_TEXT[connectionState]}
 				</span>
@@ -79,6 +81,20 @@ function TabButton({
 		<button type="button" role="tab" aria-selected={tab === current} onClick={() => onSelect(tab)}>
 			{children}
 		</button>
+	)
+}
+
+function ThemePicker() {
+	const preference = useThemePreference()
+	return (
+		<label className="theme-picker">
+			<span>Theme</span>
+			<select value={preference} onChange={(e) => setThemePreference(e.target.value as ThemePreference)}>
+				<option value="system">System</option>
+				<option value="light">Light</option>
+				<option value="dark">Dark</option>
+			</select>
+		</label>
 	)
 }
 

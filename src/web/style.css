@@ -13,7 +13,7 @@
 	--ok: #1f9d55;
 	--warn: #c27c0e;
 	--bad: #c0392b;
-	color-scheme: light dark;
+	color-scheme: light;
 	font-family:
 		-apple-system,
 		BlinkMacSystemFont,
@@ -22,19 +22,21 @@
 		sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #16181d;
-		--panel: #1f2228;
-		--row-hover: #272b33;
-		--border: #343842;
-		--text: #e3e5e8;
-		--muted: #9aa0ab;
-		--link: #58a6ff;
-		--chip: #30343d;
-		--expr-bg: #1e2a40;
-		--cell: #000000;
-	}
+/* Theme.ts resolves System / Light / Dark and sets <html data-theme> */
+:root[data-theme='dark'] {
+	--bg: #16181d;
+	--panel: #1f2228;
+	--row-hover: #272b33;
+	--border: #343842;
+	--text: #e3e5e8;
+	--muted: #9aa0ab;
+	--accent: #ff4d5e;
+	--link: #58a6ff;
+	--chip: #30343d;
+	--expr-bg: #1e2a40;
+	--cell: #000000;
+	--warn: #e0a030;
+	color-scheme: dark;
 }
 
 * {
@@ -107,6 +109,14 @@ body {
 		flex: 1;
 	}
 
+	.theme-picker {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--muted);
+		font-size: 12px;
+	}
+
 	.status {
 		font-size: 12px;
 		padding: 2px 8px;
@@ -163,6 +173,8 @@ body {
 
 		&.unused {
 			opacity: 0.35;
+			/* keeps empty cells visible against a dark sidebar */
+			border-color: var(--border);
 		}
 
 		&.selected {

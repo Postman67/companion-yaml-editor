@@ -4,31 +4,25 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 
-/** A read-only CodeMirror view of a YAML document, following the system light/dark theme */
+const themeFor = (dark: boolean) => (dark ? oneDark : [])
+
+/** A read-only CodeMirror view of a YAML document */
 export class YamlView {
 	readonly #view: EditorView
 	readonly #theme = new Compartment()
 
-	constructor(parent: HTMLElement) {
-		const darkQuery = window.matchMedia('(prefers-color-scheme: dark)')
-		const themeFor = (dark: boolean) => (dark ? oneDark : [])
-
+	constructor(parent: HTMLElement, dark: boolean) {
 		this.#view = new EditorView({
 			parent,
 			state: EditorState.create({
 				doc: '',
-				extensions: [
-					basicSetup,
-					yaml(),
-					EditorState.readOnly.of(true),
-					this.#theme.of(themeFor(darkQuery.matches)),
-				],
+				extensions: [basicSetup, yaml(), EditorState.readOnly.of(true), this.#theme.of(themeFor(dark))],
 			}),
 		})
+	}
 
-		darkQuery.addEventListener('change', (e) => {
-			this.#view.dispatch({ effects: this.#theme.reconfigure(themeFor(e.matches)) })
-		})
+	setDark(dark: boolean): void {
+		this.#view.dispatch({ effects: this.#theme.reconfigure(themeFor(dark)) })
 	}
 
 	destroy(): void {
