@@ -1,0 +1,22 @@
+{
+	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
+	"id": "companion-yaml-editor",
+	"name": "companion-yaml-editor",
+	"shortname": "yaml-editor",
+	"description": "A text (YAML) editor for Companion buttons, served at /instance/<label>/",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "https://github.com/Postman67/companion-yaml-editor",
+	"bugs": "https://github.com/Postman67/companion-yaml-editor/issues",
+	"maintainers": [{ "name": "Postman67" }],
+	"legacyIds": [],
+	"runtime": {
+		"type": "node22",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../main.js"
+	},
+	"manufacturer": "Tools",
+	"products": ["Button YAML Editor"],
+	"keywords": ["yaml", "editor", "buttons"]
+}

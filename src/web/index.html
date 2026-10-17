@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Button YAML Editor</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<div class="yaml-editor">
+			<header class="topbar">
+				<h1>Button YAML Editor</h1>
+				<span id="selection" class="selection">No button selected</span>
+				<span id="status" class="status" data-state="connecting">Connecting…</span>
+			</header>
+
+			<aside class="sidebar">
+				<label class="field">
+					<span>Page</span>
+					<select id="page-select"></select>
+				</label>
+				<div id="grid" class="grid"></div>
+			</aside>
+
+			<main class="content">
+				<div class="toolbar">
+					<span id="control-info" class="control-info"></span>
+					<span class="readonly-badge">Read-only</span>
+					<button id="copy-button" type="button" disabled>Copy YAML</button>
+				</div>
+				<div id="editor" class="editor"></div>
+				<div id="empty" class="empty">Pick a button on the left to see its configuration.</div>
+			</main>
+		</div>
+		<script type="module" src="app.js"></script>
+	</body>
+</html>
