@@ -35,7 +35,16 @@ const wsClient = createWSClient({ url: wsUrl })
 const client = createTRPCUntypedClient({ links: [wsLink({ client: wsClient })] })
 
 try {
-	const appInfo = await client.query('appInfo.version', undefined)
+	// The websocket client retries forever, so give up if Companion doesn't answer
+	const appInfo = await Promise.race([
+		client.query('appInfo.version', undefined),
+		new Promise((_resolve, reject) =>
+			setTimeout(
+				() => reject(new Error(`Couldn't reach Companion at ${baseUrl.origin}. Is it running? (use --url to point elsewhere)`)),
+				10_000
+			)
+		),
+	])
 	console.log(`  Companion ${appInfo.appVersion} (${appInfo.appBuild})`)
 	if (!SUPPORTED_COMPANION.test(appInfo.appVersion)) {
 		console.warn(`  Warning: this editor targets Companion 5.1.x; its internal api may differ in this version`)

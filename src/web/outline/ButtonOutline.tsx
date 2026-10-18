@@ -8,7 +8,9 @@ import {
 } from '../api/CompanionApi.js'
 import { createEntityApi } from '../api/EntityApi.js'
 import { useStores } from '../stores/CompanionStores.js'
+import { Store } from '../stores/Store.js'
 import { CollapseState } from './CollapseState.js'
+import type { DragSource } from './DragDrop.js'
 import { EntityList } from './EntityList.js'
 import { OutlineContext, type OutlineContextValue } from './OutlineContext.js'
 
@@ -24,7 +26,13 @@ export function ButtonOutline({
 }) {
 	const { client } = useStores()
 	const context = useMemo<OutlineContextValue>(
-		() => ({ controlId, location, api: createEntityApi(client, controlId), collapse: new CollapseState(controlId) }),
+		() => ({
+			controlId,
+			location,
+			api: createEntityApi(client, controlId),
+			collapse: new CollapseState(controlId),
+			drag: new Store<DragSource | null>(null),
+		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- location is only read for display
 		[client, controlId]
 	)

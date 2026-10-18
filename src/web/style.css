@@ -297,6 +297,54 @@ body {
 		background: var(--row-hover);
 	}
 
+	/* ---- drag and drop ---- */
+
+	.drag-handle {
+		cursor: grab;
+		color: var(--muted);
+		padding: 0 2px;
+		user-select: none;
+		visibility: hidden;
+	}
+
+	.entity-line:hover .drag-handle {
+		visibility: visible;
+	}
+
+	.entity.dragging > .entity-line {
+		opacity: 0.4;
+	}
+
+	.entity-line {
+		position: relative;
+
+		&.drop-before::before,
+		&.drop-after::after {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			height: 2px;
+			background: var(--link);
+			pointer-events: none;
+		}
+
+		&.drop-before::before {
+			top: -1px;
+		}
+
+		&.drop-after::after {
+			bottom: -1px;
+		}
+	}
+
+	.list-end.drop-inside,
+	.child-group-label.drop-inside {
+		outline: 2px dashed var(--link);
+		outline-offset: -1px;
+		border-radius: 4px;
+	}
+
 	.entity-title {
 		display: flex;
 		align-items: center;

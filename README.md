@@ -17,12 +17,14 @@ It is installed **into an existing Companion** (e.g. the macOS app from the inst
 - Browse pages and buttons, with live button previews.
 - Outline view of every step, press/release/duration set, feedback and local variable, including nested
   logic (`if`, `while`, groups, `and`/`or` feedbacks).
+- Drag actions and feedbacks by their handle (⠿) to reorder them, or to move them into or out of `if`/`else`
+  blocks and groups (drop on a group's label to add to its end). Up/down arrows work too.
 - Edit: settings (with the value/expression toggle), name, enable/disable, invert, connection, move up/down,
   duplicate, delete, and add from a searchable list.
 - Button presses show a thumbnail of the target button, and link to it.
 - Raw tab: the button's full stored config as YAML.
 
-Not yet: drag-and-drop, adding steps or duration groups, style overrides, store-result settings, learn, and
+Not yet: adding steps or duration groups, style overrides, store-result settings, learn, and
 dedicated controls for some internal field types (those fall back to editing the raw value).
 
 ## Install
