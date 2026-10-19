@@ -1,11 +1,5 @@
 import { useMemo } from 'react'
-import {
-	isLayeredButton,
-	type ControlConfig,
-	type ControlLocation,
-	type LayeredButtonModel,
-	type StepModel,
-} from '../api/CompanionApi.js'
+import { isLayeredButton, type ControlConfig, type LayeredButtonModel, type StepModel } from '../api/CompanionApi.js'
 import { createEntityApi } from '../api/EntityApi.js'
 import { useStores } from '../stores/CompanionStores.js'
 import { Store } from '../stores/Store.js'
@@ -15,25 +9,15 @@ import { EntityList } from './EntityList.js'
 import { OutlineContext, type OutlineContextValue } from './OutlineContext.js'
 
 /** The whole button as a compact outline: each step's action sets, then feedbacks and local variables */
-export function ButtonOutline({
-	controlId,
-	config,
-	location,
-}: {
-	controlId: string
-	config: ControlConfig
-	location: ControlLocation
-}) {
+export function ButtonOutline({ controlId, config }: { controlId: string; config: ControlConfig }) {
 	const { client } = useStores()
 	const context = useMemo<OutlineContextValue>(
 		() => ({
 			controlId,
-			location,
 			api: createEntityApi(client, controlId),
 			collapse: new CollapseState(controlId),
 			drag: new Store<DragSource | null>(null),
 		}),
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- location is only read for display
 		[client, controlId]
 	)
 
@@ -68,19 +52,17 @@ export function ButtonOutline({
 					/>
 				</section>
 
-				{config.localVariables.length > 0 ? (
-					<section className="outline-section">
-						<h2>Local variables</h2>
-						<EntityList
-							location="local-variables"
-							ownerId={null}
-							entities={config.localVariables}
-							entityType="feedback"
-							feedbackListType="value"
-							addLabel="local variable"
-						/>
-					</section>
-				) : null}
+				<section className="outline-section">
+					<h2>Local variables</h2>
+					<EntityList
+						location="local-variables"
+						ownerId={null}
+						entities={config.localVariables}
+						entityType="feedback"
+						feedbackListType="value"
+						addLabel="local variable"
+					/>
+				</section>
 			</div>
 		</OutlineContext.Provider>
 	)

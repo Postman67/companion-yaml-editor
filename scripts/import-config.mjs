@@ -8,7 +8,7 @@
 import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import { parseArgs } from 'node:util'
-import { createTRPCUntypedClient, createWSClient, wsLink } from '@trpc/client'
+import { connectCompanion, withTimeout } from './companion-client.mjs'
 
 const CHUNK_SIZE = 512 * 1024
 
@@ -24,15 +24,15 @@ if (!args.url || positionals.length !== 1) {
 const baseUrl = new URL(args.url)
 const data = await fs.readFile(positionals[0])
 
-const wsClient = createWSClient({ url: `${baseUrl.protocol === 'https:' ? 'wss' : 'ws'}://${baseUrl.host}/trpc` })
-const client = createTRPCUntypedClient({ links: [wsLink({ client: wsClient })] })
+const { client, close } = connectCompanion(baseUrl)
 
 try {
 	// The upload and the import must happen on the same connection: the parsed file is held on it
-	const sessionId = await client.mutation('importExport.prepareImport.start', {
-		name: 'import.companionconfig',
-		size: data.length,
-	})
+	const sessionId = await withTimeout(
+		client.mutation('importExport.prepareImport.start', { name: 'import.companionconfig', size: data.length }),
+		10_000,
+		`Couldn't reach Companion at ${baseUrl.origin}. Is it running?`
+	)
 	if (!sessionId) throw new Error('Companion refused to start the upload (another upload in progress?)')
 
 	for (let offset = 0; offset < data.length; offset += CHUNK_SIZE) {
@@ -82,5 +82,5 @@ try {
 	console.error(`Import failed: ${e instanceof Error ? e.message : e}`)
 	process.exitCode = 1
 } finally {
-	wsClient.close()
+	close()
 }

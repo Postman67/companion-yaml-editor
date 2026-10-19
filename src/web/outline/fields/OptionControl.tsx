@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { JsonValue, OptionField } from '../../api/CompanionApi.js'
 import { useStores } from '../../stores/CompanionStores.js'
 import { useStore } from '../../stores/Store.js'
@@ -116,25 +116,66 @@ function DropdownControl({ field, value, onChange }: ControlProps) {
 }
 
 function MultiDropdownControl({ field, value, onChange }: ControlProps) {
-	const selected = new Set((Array.isArray(value) ? value : []).map(String))
-	const choices = field.choices ?? []
+	return (
+		<MultiChoiceControl
+			choices={field.choices ?? []}
+			value={value}
+			minSelection={field.minSelection}
+			maxSelection={field.maxSelection}
+			onChange={onChange}
+		/>
+	)
+}
+
+/**
+ * Checkboxes for a list value. Ticking or unticking one only adds or removes that id: stored ids that
+ * aren't among the choices (yet, e.g. a module that lists them once it reaches its device) are kept,
+ * and shown so they can still be removed.
+ */
+function MultiChoiceControl({
+	choices,
+	value,
+	minSelection,
+	maxSelection,
+	onChange,
+}: {
+	choices: Array<{ id: string | number; label: string }>
+	value: JsonValue | undefined
+	minSelection?: number
+	maxSelection?: number
+	onChange: (value: JsonValue[]) => void
+}) {
+	const current = Array.isArray(value) ? value : []
+	const known = new Set(choices.map((c) => String(c.id)))
+	const items: Array<{ id: JsonValue; label: string }> = [
+		...choices,
+		...current.filter((id) => !known.has(String(id))).map((id) => ({ id, label: `${String(id)} (unknown)` })),
+	]
+	const selected = new Set(current.map(String))
+
 	return (
 		<div className="multi-choices">
-			{choices.map((c) => (
-				<label key={String(c.id)}>
-					<input
-						type="checkbox"
-						checked={selected.has(String(c.id))}
-						onChange={(e) => {
-							const next = choices
-								.filter((x) => (String(x.id) === String(c.id) ? e.target.checked : selected.has(String(x.id))))
-								.map((x) => x.id)
-							onChange(next)
-						}}
-					/>
-					{c.label}
-				</label>
-			))}
+			{items.map((item) => {
+				const key = String(item.id)
+				const checked = selected.has(key)
+				const disabled = checked
+					? current.length <= (minSelection ?? 0)
+					: current.length >= (maxSelection ?? Infinity)
+				return (
+					<label key={key}>
+						<input
+							type="checkbox"
+							checked={checked}
+							disabled={disabled}
+							onChange={(e) => {
+								const without = current.filter((id) => String(id) !== key)
+								onChange(e.target.checked ? [...without, item.id] : without)
+							}}
+						/>
+						{item.label}
+					</label>
+				)
+			})}
 		</div>
 	)
 }
@@ -146,24 +187,40 @@ function MultiDropdownControl({ field, value, onChange }: ControlProps) {
  */
 function ColorControl({ field, value, onChange }: ControlProps) {
 	const hex = value == null ? '#000000' : formatColor(value)
-	const isHex = /^#[0-9a-f]{6}$/i.test(hex)
+	const pickerValue = /^#[0-9a-f]{6}$/i.test(hex) ? hex : '#000000'
+
+	// React's onChange fires for every movement while the picker is open, so that only previews the colour;
+	// the native `change` event (the picker closed on a colour) is what gets sent to Companion
+	const [draft, setDraft] = useState<string | null>(null)
+	useEffect(() => setDraft(null), [value])
+
+	const inputRef = useRef<HTMLInputElement>(null)
+	const latest = useRef({ field, value, pickerValue, onChange })
+	latest.current = { field, value, pickerValue, onChange }
+
+	useEffect(() => {
+		const input = inputRef.current
+		if (!input) return
+		const commit = () => {
+			const { field, value, pickerValue, onChange } = latest.current
+			if (input.value === pickerValue) return setDraft(null)
+			const rgb = parseInt(input.value.slice(1), 16)
+			if (field.returnType === 'string') {
+				const alpha = typeof value === 'string' ? (/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/.exec(value)?.[1] ?? '1') : '1'
+				onChange(`rgba(${(rgb >> 16) & 255}, ${(rgb >> 8) & 255}, ${rgb & 255}, ${alpha})`)
+			} else {
+				const alphaPart = typeof value === 'number' ? Math.floor(value / 0x1000000) * 0x1000000 : 0
+				onChange(alphaPart + rgb)
+			}
+		}
+		input.addEventListener('change', commit)
+		return () => input.removeEventListener('change', commit)
+	}, [])
+
 	return (
 		<span className="color-control">
-			<input
-				type="color"
-				value={isHex ? hex : '#000000'}
-				onChange={(e) => {
-					const rgb = parseInt(e.target.value.slice(1), 16)
-					if (field.returnType === 'string') {
-						const alpha = typeof value === 'string' ? (/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/.exec(value)?.[1] ?? '1') : '1'
-						onChange(`rgba(${(rgb >> 16) & 255}, ${(rgb >> 8) & 255}, ${rgb & 255}, ${alpha})`)
-					} else {
-						const alphaPart = typeof value === 'number' ? Math.floor(value / 0x1000000) * 0x1000000 : 0
-						onChange(alphaPart + rgb)
-					}
-				}}
-			/>
-			<span className="muted">{hex}</span>
+			<input ref={inputRef} type="color" value={draft ?? pickerValue} onChange={(e) => setDraft(e.target.value)} />
+			<span className="muted">{draft ?? hex}</span>
 		</span>
 	)
 }
@@ -178,23 +235,7 @@ function ConnectionControl({ field, value, onChange }: ControlProps) {
 	]
 
 	if (field.multiple) {
-		const selected = new Set(Array.isArray(value) ? value.map(String) : [])
-		return (
-			<div className="multi-choices">
-				{options.map((o) => (
-					<label key={o.id}>
-						<input
-							type="checkbox"
-							checked={selected.has(o.id)}
-							onChange={(e) =>
-								onChange(options.filter((x) => (x.id === o.id ? e.target.checked : selected.has(x.id))).map((x) => x.id))
-							}
-						/>
-						{o.label}
-					</label>
-				))}
-			</div>
-		)
+		return <MultiChoiceControl choices={options} value={value} onChange={onChange} />
 	}
 
 	return (

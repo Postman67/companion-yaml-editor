@@ -1,15 +1,17 @@
 // Install the built module into a running Companion, over the same tRPC api the web UI uses.
 //
-//   node scripts/install.mjs [--url http://127.0.0.1:8000] [--label yaml_editor]
+//   node scripts/install.mjs [--url http://127.0.0.1:8000] [--label button_editor]
 //
 // This is what the "Import module package" button in Companion's Modules page does, followed by adding
 // (or upgrading) a connection that uses it. Companion only accepts module imports from the local machine.
 // Nothing inside Companion.app is modified, so app updates and code signing are unaffected.
+//
+// --label names the connection when one is created; existing connections of this module keep theirs.
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
-import { createTRPCUntypedClient, createWSClient, wsLink } from '@trpc/client'
+import { connectCompanion, withTimeout } from './companion-client.mjs'
 
 const root = path.resolve(import.meta.dirname, '..')
 const SUPPORTED_COMPANION = /^5\.1\./
@@ -21,30 +23,33 @@ const { values: args } = parseArgs({
 	},
 })
 
-const manifest = JSON.parse(await fs.readFile(path.join(root, 'pkg/companion/manifest.json'), 'utf8'))
+// Read the whole package before touching Companion: a reinstall removes the installed copy first
+let manifest, tarBuffer
+try {
+	manifest = JSON.parse(await fs.readFile(path.join(root, 'pkg/companion/manifest.json'), 'utf8'))
+	tarBuffer = (await fs.readFile(path.join(root, `${manifest.id}-${manifest.version}.tgz`))).toString('base64')
+} catch (e) {
+	console.error(`No built package to install (${e instanceof Error ? e.message : e}). Run "npm run build" first.`)
+	process.exit(1)
+}
 const moduleId = manifest.id
 const versionId = manifest.version
-const tgzPath = path.join(root, `${moduleId}-${versionId}.tgz`)
 
 const baseUrl = new URL(args.url ?? (await findLocalCompanionUrl()))
-const wsUrl = `${baseUrl.protocol === 'https:' ? 'wss' : 'ws'}://${baseUrl.host}/trpc`
 
 console.log(`Installing ${moduleId} v${versionId} into Companion at ${baseUrl.origin}`)
 
-const wsClient = createWSClient({ url: wsUrl })
-const client = createTRPCUntypedClient({ links: [wsLink({ client: wsClient })] })
+const { client, close } = connectCompanion(baseUrl)
+/** Connections switched off for a same-version reinstall, to switch back on if it fails part way */
+const disabledForSwap = []
+let removedPreviousCopy = false
 
 try {
-	// The websocket client retries forever, so give up if Companion doesn't answer
-	const appInfo = await Promise.race([
+	const appInfo = await withTimeout(
 		client.query('appInfo.version', undefined),
-		new Promise((_resolve, reject) =>
-			setTimeout(
-				() => reject(new Error(`Couldn't reach Companion at ${baseUrl.origin}. Is it running? (use --url to point elsewhere)`)),
-				10_000
-			)
-		),
-	])
+		10_000,
+		`Couldn't reach Companion at ${baseUrl.origin}. Is it running? (use --url to point elsewhere)`
+	)
 	console.log(`  Companion ${appInfo.appVersion} (${appInfo.appBuild})`)
 	if (!SUPPORTED_COMPANION.test(appInfo.appVersion)) {
 		console.warn(`  Warning: this editor targets Companion 5.1.x; its internal api may differ in this version`)
@@ -66,15 +71,16 @@ try {
 		for (const connection of connections) {
 			if (connection.enabled && connection.moduleVersionId === versionId) {
 				await client.mutation('instances.connections.setEnabled', { connectionId: connection.id, enabled: false })
+				disabledForSwap.push(connection)
 			}
 		}
 		await expectOk(
 			client.mutation('instances.modulesManager.uninstallModule', { moduleType: 'connection', moduleId, versionId }),
 			'remove the previous copy'
 		)
+		removedPreviousCopy = true
 	}
 
-	const tarBuffer = (await fs.readFile(tgzPath)).toString('base64')
 	await expectOk(client.mutation('instances.modulesManager.installModuleTar', { tarBuffer }), 'install the module')
 	console.log(`  Module installed`)
 
@@ -116,8 +122,17 @@ try {
 } catch (e) {
 	console.error(`\nInstall failed: ${e instanceof Error ? e.message : e}`)
 	process.exitCode = 1
+	if (removedPreviousCopy) console.error(`  The previous copy of v${versionId} was removed: run this again once fixed`)
+	for (const connection of disabledForSwap) {
+		try {
+			await client.mutation('instances.connections.setEnabled', { connectionId: connection.id, enabled: true })
+			console.error(`  Re-enabled connection "${connection.label}"`)
+		} catch {
+			console.error(`  Connection "${connection.label}" is still disabled: enable it in Companion's Connections page`)
+		}
+	}
 } finally {
-	wsClient.close()
+	close()
 }
 
 /** The mutations used here resolve to null on success, or an error message */

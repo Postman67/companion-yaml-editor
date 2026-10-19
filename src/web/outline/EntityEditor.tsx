@@ -3,7 +3,7 @@ import { useStores } from '../stores/CompanionStores.js'
 import { useStore } from '../stores/Store.js'
 import { CommitTextInput } from './fields/CommitTextInput.js'
 import { OptionField } from './fields/OptionField.js'
-import { useOutline } from './OutlineContext.js'
+import { reportRefusal, useOutline } from './OutlineContext.js'
 
 /** The expanded editor under a row: name, connection, invert and every visible option */
 export function EntityEditor({
@@ -20,7 +20,6 @@ export function EntityEditor({
 	const stores = useStores()
 	const connections = useStore(stores.connections)
 	const { api } = useOutline()
-	const run = (promise: Promise<unknown>) => promise.catch((e) => window.alert(`Companion refused the change: ${e}`))
 
 	// Only connections of the same module can take over an entity (as in Companion's EntityChangeConnection)
 	const currentConnection = connections.get(entity.connectionId)
@@ -40,7 +39,7 @@ export function EntityEditor({
 				<CommitTextInput
 					value={entity.headline ?? ''}
 					placeholder={definition?.label ?? entity.definitionId}
-					onCommit={(headline) => run(api.setHeadline(location, entity.id, headline))}
+					onCommit={(headline) => reportRefusal(api.setHeadline(location, entity.id, headline))}
 				/>
 			</label>
 
@@ -49,7 +48,7 @@ export function EntityEditor({
 					<span className="option-label">Connection</span>
 					<select
 						value={entity.connectionId}
-						onChange={(e) => run(api.setConnection(location, entity.id, e.target.value))}
+						onChange={(e) => reportRefusal(api.setConnection(location, entity.id, e.target.value))}
 					>
 						{siblingConnections.map((c) => (
 							<option key={c.id} value={c.id}>
@@ -67,7 +66,9 @@ export function EntityEditor({
 						type="checkbox"
 						checked={entity.isInverted?.value === true}
 						disabled={entity.isInverted?.isExpression === true}
-						onChange={(e) => run(api.setInverted(location, entity.id, { isExpression: false, value: e.target.checked }))}
+						onChange={(e) =>
+							reportRefusal(api.setInverted(location, entity.id, { isExpression: false, value: e.target.checked }))
+						}
 					/>
 				</label>
 			) : null}
@@ -81,7 +82,7 @@ export function EntityEditor({
 							value={entity.options[field.id]}
 							supportsExpressions={definition.optionsSupportExpressions && !field.disableAutoExpression}
 							allowInternalFields={entity.connectionId === 'internal'}
-							onChange={(value) => run(api.setOption(location, entity.id, field.id, value))}
+							onChange={(value) => reportRefusal(api.setOption(location, entity.id, field.id, value))}
 						/>
 					)
 				)

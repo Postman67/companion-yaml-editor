@@ -8,6 +8,12 @@ import type {
 } from '../api/CompanionApi.js'
 import { canAddEntityToFeedbackList } from '../companion/Entity.js'
 
+/**
+ * The drag's data type. Not `text/plain`, which text fields accept: a drop that misses its target would
+ * otherwise type the entity's name into an open option field, to be sent to Companion on blur.
+ */
+export const DRAG_DATA_TYPE = 'application/x-button-editor-entity'
+
 /** The entity being dragged, and where it currently is */
 export interface DragSource {
 	entityId: string

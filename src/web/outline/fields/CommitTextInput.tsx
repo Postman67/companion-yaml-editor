@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * A text box that only sends its value when you finish editing (blur, or Enter on a single line), so
@@ -22,6 +22,8 @@ export function CommitTextInput({
 }) {
 	const [draft, setDraft] = useState(value)
 	const [editing, setEditing] = useState(false)
+	// Escape blurs the field, and that blur runs before the reverted draft renders: it must not commit
+	const cancelling = useRef(false)
 
 	// Follow live changes from Companion, unless the user is mid-edit
 	useEffect(() => {
@@ -30,6 +32,10 @@ export function CommitTextInput({
 
 	const commit = () => {
 		setEditing(false)
+		if (cancelling.current) {
+			cancelling.current = false
+			return
+		}
 		if (draft !== value) onCommit(draft)
 	}
 
@@ -42,8 +48,8 @@ export function CommitTextInput({
 		onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
 		onKeyDown: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 			if (e.key === 'Escape') {
+				cancelling.current = true
 				setDraft(value)
-				setEditing(false)
 				e.currentTarget.blur()
 			} else if (e.key === 'Enter' && (!multiline || e.metaKey || e.ctrlKey)) {
 				e.preventDefault()

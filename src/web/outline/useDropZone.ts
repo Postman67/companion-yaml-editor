@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../stores/Store.js'
 import { resolveDrop, type DropTarget } from './DragDrop.js'
-import { useOutline } from './OutlineContext.js'
+import { reportRefusal, useOutline } from './OutlineContext.js'
 
 /** Where the drop line is drawn: above or below a row, or highlighting a whole zone */
 export type DropIndicator = 'before' | 'after' | 'inside'
@@ -49,9 +49,10 @@ export function useDropZone(
 			e.stopPropagation()
 			drag.set(null)
 			const { source: moved, move } = result
-			api
-				.move(moved.location, moved.entityId, move.newOwnerId, move.newLocation, move.newIndex)
-				.catch((err) => window.alert(`Companion refused the move: ${err}`))
+			reportRefusal(
+				api.move(moved.location, moved.entityId, move.newOwnerId, move.newLocation, move.newIndex),
+				'move'
+			)
 		},
 	}
 

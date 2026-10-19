@@ -132,6 +132,51 @@ body {
 		}
 	}
 
+	.lock-button {
+		padding: 2px 10px;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--panel);
+		cursor: pointer;
+	}
+
+	/* In place of the sidebar and content while locked (or before Companion's settings arrive) */
+	.lock-screen {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+		padding: 64px 16px;
+
+		h2 {
+			margin: 0;
+			font-size: 18px;
+		}
+
+		p {
+			margin: 0;
+		}
+
+		button {
+			padding: 3px 12px;
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			background: var(--panel);
+			cursor: pointer;
+		}
+	}
+
+	.lock-row {
+		display: flex;
+		gap: 6px;
+	}
+
+	.lock-error {
+		color: var(--bad);
+	}
+
 	.sidebar {
 		grid-area: side;
 		padding: 12px;

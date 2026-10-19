@@ -1,5 +1,6 @@
 /**
- * Ported from Bitfocus Companion v5.1.0 (MIT licence): shared-lib/lib/Entity.ts
+ * Ported from Bitfocus Companion v5.1.0: shared-lib/lib/Entity.ts
+ * Copyright (c) 2018 Bitfocus AS - William Viker & Håkon Nessjøen. MIT licence: see LICENSE.
  */
 import type { EntityDefinition, FeedbackListType } from '../api/CompanionApi.js'
 

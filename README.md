@@ -39,15 +39,28 @@ npm run install-companion
 This builds the module, imports it into Companion (like _Modules → Import module package_), and adds a
 connection called `button_editor`, or updates the existing one. It prints the editor's URL.
 
-Companion's address is read from the launcher settings
-(`~/Library/Application Support/companion/config.json`). Override it, or the connection label, with:
+On macOS, Companion's address is read from the launcher settings
+(`~/Library/Application Support/companion/config.json`); elsewhere it defaults to `http://127.0.0.1:8000`.
+Override it, or the label of the connection it creates, with:
 
 ```bash
 node scripts/install.mjs --url http://127.0.0.1:8000 --label my_editor
 ```
 
+`--label` only applies when the connection is first created. Existing connections keep their labels, and
+renaming one in Companion moves the editor to the new `/instance/<label>/` address.
+
 Running it again reinstalls in place (it briefly disables the connection to swap the files). Bumping the
 `version` in `package.json` installs the new version and removes the old one.
+
+## Security
+
+Edits are live: every change is applied to the button straight away, with no separate save and no undo.
+
+Companion's web interface and api have no authentication, so anyone who can reach Companion's port can
+control it, with or without this editor. If Companion's _Admin UI Password_ lockout is enabled, the editor
+asks for the same password and locks again after the same idle time, as Companion's own UI does. Like
+Companion's, that prevents accidental changes; it is not a security boundary.
 
 ## Compatibility
 
@@ -55,8 +68,13 @@ Targets **Companion 5.1.x**. Companion's internal api is not versioned, so the p
 here are typed by hand in [`src/web/api/CompanionApi.ts`](src/web/api/CompanionApi.ts); see
 [`docs/companion-5.1-api.md`](docs/companion-5.1-api.md). The install script warns if it sees another version.
 
-Some logic is ported from Companion (MIT licence) so the editor behaves identically, marked at the top of
-each file in [`src/web/companion/`](src/web/companion/).
+Some logic is ported from Companion so the editor behaves identically, marked at the top of each file in
+[`src/web/companion/`](src/web/companion/).
+
+## Licence
+
+MIT, see [`LICENSE`](LICENSE). The ported Companion code is MIT licensed by Bitfocus AS; its notice is
+included in `LICENSE`, which is also packed into the module.
 
 ## Development
 
@@ -66,6 +84,7 @@ each file in [`src/web/companion/`](src/web/companion/).
 | `src/web/` | The editor page (React): `api/` Companion types and calls, `stores/` live state, `outline/` the editor, `raw/` the YAML view |
 | `scripts/build.mjs` | Bundles the page into the module and packs `companion-yaml-editor-<version>.tgz` |
 | `scripts/install.mjs` | Installs the package into a running Companion |
+| `scripts/companion-client.mjs` | The tRPC client the scripts share |
 | `scripts/import-config.mjs` | Loads a Companion export into a **test** Companion (wipes its config) |
 | `test/` | Vitest unit tests for the pure logic |
 

@@ -6,7 +6,7 @@ import { createTRPCUntypedClient, createWSClient, wsLink } from '@trpc/client'
  * Companion's websocket Origin check.
  *
  * We use the untyped client: the router type lives inside Companion and is version-specific, so the few
- * procedures we use are typed by hand in `CompanionApi.ts`, against Companion 5.0.
+ * procedures we use are typed by hand in `CompanionApi.ts`, against Companion 5.1.
  */
 export type ConnectionState = 'connecting' | 'open' | 'closed'
 

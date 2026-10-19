@@ -1,5 +1,6 @@
 import type { ControlLocation } from './api/CompanionApi.js'
 import { useLocationPreview, useStores } from './stores/CompanionStores.js'
+import { getPage } from './stores/PagesState.js'
 import { useStore } from './stores/Store.js'
 
 /** Page picker and the page's button grid, with live previews */
@@ -27,6 +28,10 @@ export function Sidebar({
 					value={location.pageNumber}
 					onChange={(e) => onSelect({ ...location, pageNumber: Number(e.target.value) })}
 				>
+					{/* Without an option of its own, a missing page would show as page 1, which then can't be picked */}
+					{pages && !getPage(pages, location.pageNumber) ? (
+						<option value={location.pageNumber}>{location.pageNumber}: (no such page)</option>
+					) : null}
 					{pages?.order.map((id, index) => (
 						<option key={id} value={index + 1}>
 							{index + 1}: {pages.pages[id]?.name || 'PAGE'}

@@ -11,6 +11,7 @@ import type {
 	EntityDefinitionUpdate,
 	PageModelChanges,
 	UIControlUpdate,
+	UserConfigAdminLock,
 	UserConfigGridSize,
 	UserConfigUpdate,
 	WrappedImage,
@@ -22,6 +23,8 @@ import { Store } from './Store.js'
 
 const reportError = (what: string) => (err: Error) => console.error(`${what} failed`, err)
 
+const ADMIN_LOCK_DEFAULTS: UserConfigAdminLock = { admin_lockout: false, admin_timeout: 0, admin_password: '' }
+
 /** The Companion-wide state the editor needs, kept live from Companion's subscriptions */
 export class CompanionStores {
 	readonly client: CompanionClient
@@ -29,6 +32,8 @@ export class CompanionStores {
 
 	readonly pages = new Store<PagesState | null>(null)
 	readonly gridSize = new Store<UserConfigGridSize>({ minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 })
+	/** null until Companion's user config has arrived, so the editor can't show before the lock does */
+	readonly adminLock = new Store<UserConfigAdminLock | null>(null)
 	readonly connections = new Store<ReadonlyMap<string, ClientConnectionConfig>>(new Map())
 	readonly actionDefinitions = new Store<EntityDefinitions>({})
 	readonly feedbackDefinitions = new Store<EntityDefinitions>({})
@@ -51,8 +56,19 @@ export class CompanionStores {
 			'userConfig.watchConfig',
 			undefined,
 			(update) => {
-				if (update.type === 'init') this.gridSize.set(update.config.gridSize)
-				else if (update.key === 'gridSize') this.gridSize.set(update.value as UserConfigGridSize)
+				if (update.type === 'init') {
+					const { gridSize, admin_lockout, admin_timeout, admin_password } = update.config
+					this.gridSize.set(gridSize)
+					this.adminLock.set({
+						admin_lockout: admin_lockout === true,
+						admin_timeout: admin_timeout ?? 0,
+						admin_password: admin_password ?? '',
+					})
+				} else if (update.key === 'gridSize') {
+					this.gridSize.set(update.value as UserConfigGridSize)
+				} else if (update.key in ADMIN_LOCK_DEFAULTS) {
+					this.adminLock.update((lock) => ({ ...(lock ?? ADMIN_LOCK_DEFAULTS), [update.key]: update.value }))
+				}
 			},
 			reportError('userConfig.watchConfig')
 		)
@@ -132,10 +148,12 @@ export function useStores(): CompanionStores {
 /** The live config of a control, or null while loading / once it is deleted */
 export function useControlConfig(controlId: string | null): ControlConfig | null {
 	const { client } = useStores()
-	const [config, setConfig] = useState<ControlConfig | null>(null)
+	// Tagged with its control: on the render where controlId changes, the previous control's config must
+	// not be handed out under the new id (state set by the effect below only lands a render later)
+	const [state, setState] = useState<{ controlId: string; config: ControlConfig | null } | null>(null)
 
 	useEffect(() => {
-		setConfig(null)
+		setState(null)
 		if (!controlId) return
 
 		let current: ControlConfig | null = null
@@ -153,13 +171,13 @@ export function useControlConfig(controlId: string | null): ControlConfig | null
 				} else {
 					return
 				}
-				setConfig(current)
+				setState({ controlId, config: current })
 			},
 			reportError('controls.watchControl')
 		)
 	}, [client, controlId])
 
-	return config
+	return state?.controlId === controlId ? state.config : null
 }
 
 /** The rendered image of the button at a location */

@@ -3,7 +3,7 @@ import { canAddEntityToFeedbackList } from '../companion/Entity.js'
 import { useStores } from '../stores/CompanionStores.js'
 import { useStore } from '../stores/Store.js'
 import type { EntityListProps } from './EntityList.js'
-import { useOutline } from './OutlineContext.js'
+import { reportRefusal, useOutline } from './OutlineContext.js'
 
 const MAX_RESULTS = 40
 
@@ -20,6 +20,7 @@ export function AddEntity({ location, ownerId, entityType, feedbackListType, add
 	const stores = useStores()
 	const { api, collapse } = useOutline()
 	const definitions = useStore(entityType === 'action' ? stores.actionDefinitions : stores.feedbackDefinitions)
+	// Only read through stores.connectionLabel, but the labels must refresh when connections change
 	const connections = useStore(stores.connections)
 	const [open, setOpen] = useState(false)
 	const [query, setQuery] = useState('')
@@ -29,8 +30,7 @@ export function AddEntity({ location, ownerId, entityType, feedbackListType, add
 		if (!open) return []
 		const result: Candidate[] = []
 		for (const [connectionId, connectionDefinitions] of Object.entries(definitions)) {
-			const connectionLabel =
-				connectionId === 'internal' ? 'internal' : (connections.get(connectionId)?.label ?? connectionId)
+			const connectionLabel = stores.connectionLabel(connectionId)
 			for (const [definitionId, definition] of Object.entries(connectionDefinitions ?? {})) {
 				if (!definition) continue
 				if (entityType === 'feedback' && !canAddEntityToFeedbackList(feedbackListType, definition)) continue
@@ -45,7 +45,7 @@ export function AddEntity({ location, ownerId, entityType, feedbackListType, add
 			}
 		}
 		return result.sort((a, b) => a.connectionLabel.localeCompare(b.connectionLabel) || a.label.localeCompare(b.label))
-	}, [open, definitions, connections, entityType, feedbackListType])
+	}, [open, definitions, connections, stores, entityType, feedbackListType])
 
 	if (!open) {
 		return (
@@ -61,12 +61,11 @@ export function AddEntity({ location, ownerId, entityType, feedbackListType, add
 	const add = (candidate: Candidate) => {
 		setOpen(false)
 		setQuery('')
-		api
-			.add(location, ownerId, candidate.connectionId, entityType, candidate.definitionId)
-			.then((newId) => {
+		reportRefusal(
+			api.add(location, ownerId, candidate.connectionId, entityType, candidate.definitionId).then((newId) => {
 				if (newId) collapse.setOpen(newId, true)
 			})
-			.catch((e) => window.alert(`Companion refused the change: ${e}`))
+		)
 	}
 
 	return (

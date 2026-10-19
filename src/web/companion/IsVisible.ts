@@ -1,6 +1,7 @@
 /**
- * Option visibility, ported from Bitfocus Companion v5.1.0 (MIT licence):
+ * Option visibility, ported from Bitfocus Companion v5.1.0:
  *   shared-lib/lib/IsVisible.ts, shared-lib/lib/Expressions.ts and webui/src/Hooks/useOptionsAndIsVisible.ts
+ * Copyright (c) 2018 Bitfocus AS - William Viker & Håkon Nessjøen. MIT licence: see LICENSE.
  *
  * Kept as close to the original as possible so a field shows and hides exactly as it does in Companion.
  */

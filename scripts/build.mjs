@@ -79,6 +79,7 @@ manifest.runtime.apiVersion = baseJson.version
 await fs.mkdir(path.join(pkgDir, 'companion'), { recursive: true })
 await fs.writeFile(path.join(pkgDir, 'companion/manifest.json'), JSON.stringify(manifest, null, '\t'))
 await fs.copyFile(path.join(root, 'companion/HELP.md'), path.join(pkgDir, 'companion/HELP.md'))
+await fs.copyFile(path.join(root, 'LICENSE'), path.join(pkgDir, 'LICENSE'))
 await fs.writeFile(
 	path.join(pkgDir, 'package.json'),
 	JSON.stringify({ name: packageJson.name, version: packageJson.version, type: 'commonjs', main: 'main.js' }, null, '\t')

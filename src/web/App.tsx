@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ControlLocation } from './api/CompanionApi.js'
+import { LockScreen, useAdminLock } from './AdminLock.js'
+import type { ControlConfig, ControlLocation } from './api/CompanionApi.js'
 import { ButtonOutline } from './outline/ButtonOutline.js'
 import { RawView } from './raw/RawView.js'
 import { Sidebar } from './Sidebar.js'
@@ -19,9 +20,10 @@ export function App() {
 
 	const location = useHashLocation()
 	const [tab, setTab] = useState<Tab>('outline')
+	const adminLock = useAdminLock()
 
 	const controlId = pages ? getControlIdAt(pages, location) : null
-	const config = useControlConfig(controlId)
+	const config = useControlConfig(adminLock.state === 'unlocked' ? controlId : null)
 	const pageName = pages ? getPage(pages, location.pageNumber)?.name : undefined
 
 	return (
@@ -33,36 +35,64 @@ export function App() {
 					{pageName ? ` (${pageName})` : ''} · row {location.row} · column {location.column}
 				</span>
 				<ThemePicker />
+				{adminLock.lock ? (
+					<button type="button" className="lock-button" title="Lock the editor" onClick={adminLock.lock}>
+						Lock
+					</button>
+				) : null}
 				<span className="status" data-state={connectionState}>
 					{STATUS_TEXT[connectionState]}
 				</span>
 			</header>
 
-			<Sidebar location={location} onSelect={(l) => (window.location.hash = formatLocationHash(l))} />
-
-			<main className="content">
-				<div className="tabs" role="tablist">
-					<TabButton tab="outline" current={tab} onSelect={setTab}>
-						Outline
-					</TabButton>
-					<TabButton tab="raw" current={tab} onSelect={setTab}>
-						Raw
-					</TabButton>
-					<span className="control-id">{controlId ?? 'Empty location'}</span>
-				</div>
-				<div className="tab-body">
-					{!controlId ? (
-						<p className="empty">Pick a button on the left.</p>
-					) : !config ? (
-						<p className="empty">Loading…</p>
-					) : tab === 'outline' ? (
-						<ButtonOutline controlId={controlId} config={config} location={location} />
-					) : (
-						<RawView config={config} />
-					)}
-				</div>
-			</main>
+			{adminLock.state === 'loading' ? (
+				<p className="lock-screen empty">Connecting to Companion…</p>
+			) : adminLock.state === 'locked' ? (
+				<LockScreen onUnlock={adminLock.unlock} />
+			) : (
+				<>
+					<Sidebar location={location} onSelect={(l) => (window.location.hash = formatLocationHash(l))} />
+					<Content tab={tab} setTab={setTab} controlId={controlId} config={config} />
+				</>
+			)}
 		</div>
+	)
+}
+
+function Content({
+	tab,
+	setTab,
+	controlId,
+	config,
+}: {
+	tab: Tab
+	setTab: (tab: Tab) => void
+	controlId: string | null
+	config: ControlConfig | null
+}) {
+	return (
+		<main className="content">
+			<div className="tabs" role="tablist">
+				<TabButton tab="outline" current={tab} onSelect={setTab}>
+					Outline
+				</TabButton>
+				<TabButton tab="raw" current={tab} onSelect={setTab}>
+					Raw
+				</TabButton>
+				<span className="control-id">{controlId ?? 'Empty location'}</span>
+			</div>
+			<div className="tab-body">
+				{!controlId ? (
+					<p className="empty">Pick a button on the left.</p>
+				) : !config ? (
+					<p className="empty">Loading…</p>
+				) : tab === 'outline' ? (
+					<ButtonOutline controlId={controlId} config={config} />
+				) : (
+					<RawView config={config} />
+				)}
+			</div>
+		</main>
 	)
 }
 

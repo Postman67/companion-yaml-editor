@@ -1,6 +1,7 @@
 /**
  * Runs a module-supplied `isVisible` function with a limited scope.
- * Ported from Bitfocus Companion v5.1.0 (MIT licence): webui/src/Resources/sandbox.ts
+ * Ported from Bitfocus Companion v5.1.0: webui/src/Resources/sandbox.ts
+ * Copyright (c) 2018 Bitfocus AS - William Viker & Håkon Nessjøen. MIT licence: see LICENSE.
  */
 
 const freezePrototypes = () => {

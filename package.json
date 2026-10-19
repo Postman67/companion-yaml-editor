@@ -2,7 +2,7 @@
   "name": "companion-yaml-editor",
   "version": "0.3.0",
   "private": true,
-  "description": "A text (YAML) editor for Bitfocus Companion buttons, installed into an existing Companion as a module",
+  "description": "A compact outline editor for Bitfocus Companion buttons, installed into an existing Companion as a module",
   "license": "MIT",
   "type": "module",
   "scripts": {

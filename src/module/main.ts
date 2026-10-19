@@ -16,12 +16,19 @@ type ModuleConfig = Record<string, never>
  */
 class YamlEditorInstance extends InstanceBase<ModuleConfig> {
 	async init(_config: ModuleConfig): Promise<void> {
-		this.updateStatus(InstanceStatus.Ok, `Open /instance/${this.label}/`)
+		this.#showUrl()
 	}
 
 	async destroy(): Promise<void> {}
 
-	async configUpdated(_config: ModuleConfig): Promise<void> {}
+	/** Also called when the connection is renamed, which moves the page to the new label */
+	async configUpdated(_config: ModuleConfig): Promise<void> {
+		this.#showUrl()
+	}
+
+	#showUrl(): void {
+		this.updateStatus(InstanceStatus.Ok, `Open /instance/${this.label}/`)
+	}
 
 	getConfigFields(): SomeCompanionConfigField[] {
 		return [

@@ -12,10 +12,10 @@ import { useStores } from '../stores/CompanionStores.js'
 import { getPage } from '../stores/PagesState.js'
 import { useStore } from '../stores/Store.js'
 import { useCollapseState } from './CollapseState.js'
-import { createDragSource } from './DragDrop.js'
+import { createDragSource, DRAG_DATA_TYPE } from './DragDrop.js'
 import { EntityEditor } from './EntityEditor.js'
 import { EntityList } from './EntityList.js'
-import { useOutline } from './OutlineContext.js'
+import { reportRefusal, useOutline } from './OutlineContext.js'
 import { entityTitle, summariseEntity, type SummaryContext } from './Summarise.js'
 import { SummaryView } from './SummaryView.js'
 import { useDropZone } from './useDropZone.js'
@@ -70,8 +70,6 @@ export function EntityRow({
 	const inverted = entity.isInverted?.isExpression ? null : entity.isInverted?.value === true
 	const childGroups = entity.connectionId === 'internal' ? (definition?.supportsChildGroups ?? []) : []
 
-	const run = (promise: Promise<unknown>) => promise.catch((e) => window.alert(`Companion refused the change: ${e}`))
-
 	// Dropping on this line goes before or after this entity. With its child groups showing below, "after"
 	// would land past all of them, so the whole line means "before"; drop into a group via its rows or label.
 	const showsChildren = childGroups.some((group) => !collapse.isFolded(`${entity.id}:${group.groupId}`))
@@ -96,7 +94,7 @@ export function EntityRow({
 					title="Drag to move"
 					onDragStart={(e) => {
 						e.dataTransfer.effectAllowed = 'move'
-						e.dataTransfer.setData('text/plain', entityTitle(entity, definition))
+						e.dataTransfer.setData(DRAG_DATA_TYPE, entity.id)
 						if (lineRef.current) e.dataTransfer.setDragImage(lineRef.current, 12, 12)
 						drag.set(createDragSource(entity, location, ownerId, index, definition))
 					}}
@@ -109,7 +107,7 @@ export function EntityRow({
 					className="entity-enabled"
 					checked={enabled}
 					title={enabled ? 'Enabled' : 'Disabled'}
-					onChange={(e) => run(api.setEnabled(location, entity.id, e.target.checked))}
+					onChange={(e) => reportRefusal(api.setEnabled(location, entity.id, e.target.checked))}
 				/>
 				<button
 					type="button"
@@ -128,7 +126,7 @@ export function EntityRow({
 						type="button"
 						title="Move up"
 						disabled={index === 0}
-						onClick={() => run(api.move(location, entity.id, ownerId, location, index - 1))}
+						onClick={() => reportRefusal(api.move(location, entity.id, ownerId, location, index - 1))}
 					>
 						↑
 					</button>
@@ -136,18 +134,20 @@ export function EntityRow({
 						type="button"
 						title="Move down"
 						disabled={index === count - 1}
-						onClick={() => run(api.move(location, entity.id, ownerId, location, index + 1))}
+						onClick={() => reportRefusal(api.move(location, entity.id, ownerId, location, index + 1))}
 					>
 						↓
 					</button>
-					<button type="button" title="Duplicate" onClick={() => run(api.duplicate(location, entity.id))}>
+					<button type="button" title="Duplicate" onClick={() => reportRefusal(api.duplicate(location, entity.id))}>
 						⧉
 					</button>
 					<button
 						type="button"
 						title="Delete"
 						onClick={() => {
-							if (window.confirm(`Delete "${entityTitle(entity, definition)}"?`)) run(api.remove(location, entity.id))
+							if (window.confirm(`Delete "${entityTitle(entity, definition)}"?`)) {
+								reportRefusal(api.remove(location, entity.id))
+							}
 						}}
 					>
 						✕

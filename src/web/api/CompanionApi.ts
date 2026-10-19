@@ -222,8 +222,18 @@ export interface UserConfigGridSize {
 	minRow: number
 	maxRow: number
 }
+/** Companion's "Admin UI Password" settings (`shared-lib/lib/Model/UserConfigModel.ts`) */
+export interface UserConfigAdminLock {
+	admin_lockout: boolean
+	/** Minutes of inactivity before the UI locks again; 0 = never */
+	admin_timeout: number
+	admin_password: string
+}
 export type UserConfigUpdate =
-	| { type: 'init'; config: { gridSize: UserConfigGridSize } & Record<string, unknown> }
+	| {
+			type: 'init'
+			config: { gridSize: UserConfigGridSize } & Partial<UserConfigAdminLock> & Record<string, unknown>
+	  }
 	| { type: 'key'; key: string; value: unknown }
 
 /** `instances.connections.watch` (only the fields we read) */

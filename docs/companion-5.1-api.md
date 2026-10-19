@@ -19,7 +19,7 @@ authentication. Root router: `companion/lib/UI/TRPC.ts:187-213`.
 | Action / feedback definitions | `instances.definitions.actions` / `.feedbacks` | `{type:'init', definitions: {connectionId: {definitionId: def}}}`, `add-connection`, `forget-connection`, `update-connection {added, changed: json patches, removed}`. Internal ones are under `'internal'` |
 | Connections | `instances.connections.watch` | arrays of `{type:'init', info}`, `{type:'update', id, info}`, `{type:'remove', id}` |
 | Custom variables | `customVariables.watch` | arrays of `{type:'init', info}`, `{type:'update', itemId, info}`, `{type:'remove', itemId}` |
-| Grid size | `userConfig.watchConfig` | `{type:'init', config}`, `{type:'key', key, value}` |
+| Grid size, admin lockout | `userConfig.watchConfig` | `{type:'init', config}`, `{type:'key', key, value}`. The lockout is `admin_lockout`, `admin_timeout` (minutes, 0 = never) and `admin_password`, sent to every client and checked client-side (`webui/src/App.tsx`) |
 | Button image | `preview.graphics.location {location}` | `{image: dataUrl, isUsed}` |
 
 Module definitions only exist while the module runs. Some modules (e.g. ProPresenter) only publish their
